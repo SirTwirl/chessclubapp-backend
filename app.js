@@ -2,6 +2,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const config = require('./utils/config')
 const logger = require('./utils/logger')
+const middleware = require('./utils/middleware')
 const cors = require('cors')
 
 const app = express()
@@ -21,6 +22,11 @@ connectToDatabase()
 
 app.use(cors())
 app.use(express.json())
+
+app.use(middleware.requestLogger)
+
+app.use(middleware.unknownEndpoint)
+app.use(middleware.errorHandler)
 
 
 module.exports = app
