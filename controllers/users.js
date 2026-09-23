@@ -9,5 +9,15 @@ usersRouter.get('/', async (request, response) => {
   response.json(users)
 })
 
+usersRouter.get('/coaches', async (request, response) => {
+  const users = await User.find({ role: 'coach' })
+  response.json(users)
+})
+
+usersRouter.get('/parents', async (request, response) => {
+  const users = await User.find({ role: 'parent' })
+  response.json(users)
+})
+
 
 module.exports = usersRouter
