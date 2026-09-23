@@ -45,6 +45,24 @@ describe('GET /api/users', () => {
         assert.strictEqual(response.body.length, 1)
         assert.strictEqual(response.body[0].email, 'studentadvanced@example.com')
     })
+
+    test('return all coaches'), async () => {
+        const response = await api
+        .get('/api/users/coaches')
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+        assert.strictEqual(response.body.length, 1)
+        assert.strictEqual(response.body[0].email, 'coach@example.com')
+    }
+
+    test('return all parents', async () => {
+        const response = await api
+        .get('/api/users/parents')
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+        assert.strictEqual(response.body.length, 1)
+        assert.strictEqual(response.body[0].email, 'parent@example.com')
+    })
 })
 
 after(async () => {

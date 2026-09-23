@@ -1,5 +1,8 @@
 const User = require('../models/user')
 const bcrypt = require('bcrypt')
+const mongoose = require('mongoose')
+
+const studentID = new mongoose.Types.ObjectId('6ab41fe5025e875fb24854e6')
 
 const initialUsers = [
   {
@@ -58,7 +61,7 @@ const initialUsers = [
     age: 40,
     telephone: '4445556666',
     role: 'parent',
-    children: ['6ab41fe5025e875fb24854e6']
+    children: [studentID]
   },
 ]
 
