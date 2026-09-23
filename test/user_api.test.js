@@ -21,6 +21,30 @@ describe('GET /api/users', () => {
         
         assert.strictEqual(response.body.length, initialUsers.length)
     })
+    test('returns users from beginner group', async () => {
+        const response = await api
+        .get('/api/users?group=beginner')
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+        assert.strictEqual(response.body.length, 1)
+        assert.strictEqual(response.body[0].email, 'studentbeginner@example.com')
+    })
+    test('returns users from intermediate group', async () => {
+        const response = await api
+        .get('/api/users?group=intermediate')
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+        assert.strictEqual(response.body.length, 1)
+        assert.strictEqual(response.body[0].email, 'studentintermediate@example.com')
+    })
+    test('returns users from advanced group', async () => {
+        const response = await api
+        .get('/api/users?group=advanced')
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+        assert.strictEqual(response.body.length, 1)
+        assert.strictEqual(response.body[0].email, 'studentadvanced@example.com')
+    })
 })
 
 after(async () => {

@@ -58,7 +58,7 @@ const initialUsers = [
     age: 40,
     telephone: '4445556666',
     role: 'parent',
-    group: 'beginner'
+    children: ['6ab41fe5025e875fb24854e6']
   },
 ]
 
