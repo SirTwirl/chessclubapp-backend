@@ -5,6 +5,8 @@ const logger = require('./utils/logger')
 const middleware = require('./utils/middleware')
 const usersRouter = require('./controllers/users')
 const cors = require('cors')
+const dns = require('dns')
+dns.setServers(['8.8.8.8', '8.8.4.4'])
 
 const app = express()
 
