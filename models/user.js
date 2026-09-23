@@ -24,16 +24,36 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['beginner', 'intermediate', 'advanced'],
         required: function() {
-            return this.role === 'student' || this.role === 'parent'
+            return this.role === 'student'
         },
         validate: {
             validator: function(value) {
-                if (this.role !== 'student' && this.role !== 'parent') {
+                if (this.role !== 'student') {
                     return value === undefined || value === null
                 }
                 return true
             }, 
             message: 'Coaches and admins cannot be assigned to a group'
+        }
+    },
+    children: {
+        type: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User'
+            }
+        ],
+        required: function() {
+            return this.role === 'parent'
+        },
+        validate: {
+            validator: function(value) {
+                if(this.role !== 'parent') {
+                    return !value || value.length === 0
+                }
+                return true
+            },
+            message: 'Only parents can be assigned to children'
         }
     }
 })
