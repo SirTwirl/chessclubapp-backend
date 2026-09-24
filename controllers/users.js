@@ -2,6 +2,16 @@ const usersRouter = require('express').Router()
 const User = require('../models/user')
 const { userExtractor, requireRole } = require('../utils/middleware')
 
+usersRouter.get('/me', userExtractor, async (request, response) => {
+  const user = request.user
+
+  if (!user) {
+    return response.status(401).json({ error: 'token missing or invalid' })
+  }
+
+  response.json(user)
+})
+
 usersRouter.get('/', userExtractor, requireRole('coach', 'admin'), async (request, response) => {
   const { group } = request.query
   const filter = group ? { group } : {}
