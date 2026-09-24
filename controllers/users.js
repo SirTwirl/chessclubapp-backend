@@ -1,7 +1,8 @@
 const usersRouter = require('express').Router()
 const User = require('../models/user')
+const { userExtractor, requireRole } = require('../utils/middleware')
 
-usersRouter.get('/', async (request, response) => {
+usersRouter.get('/', userExtractor, requireRole('coach', 'admin'), async (request, response) => {
   const { group } = request.query
   const filter = group ? { group } : {}
 
@@ -9,12 +10,12 @@ usersRouter.get('/', async (request, response) => {
   response.json(users)
 })
 
-usersRouter.get('/coaches', async (request, response) => {
+usersRouter.get('/coaches', userExtractor, requireRole('coach', 'admin'), async (request, response) => {
   const users = await User.find({ role: 'coach' })
   response.json(users)
 })
 
-usersRouter.get('/parents', async (request, response) => {
+usersRouter.get('/parents', userExtractor, requireRole('coach', 'admin'), async (request, response) => {
   const users = await User.find({ role: 'parent' })
   response.json(users)
 })
