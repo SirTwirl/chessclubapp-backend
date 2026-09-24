@@ -24,6 +24,7 @@ const initialUsers = [
     role: 'coach'
   },
   {
+    _id: studentID,
     email: 'studentbeginner@example.com',
     passwordHash: bcrypt.hashSync('studentpassword', 10),
     name: 'Student',
