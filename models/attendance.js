@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
 const attendanceSchema = new mongoose.Schema({
-    user: {
+    student: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
@@ -25,6 +25,6 @@ attendanceSchema.set('toJSON', {
     }
 })
 
-attendanceSchema.index({ user: 1, date: 1 }, { unique: true })
+attendanceSchema.index({ student: 1, date: 1 }, { unique: true })
 
 module.exports = mongoose.model('Attendance', attendanceSchema)
