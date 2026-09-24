@@ -1,5 +1,6 @@
 const attendancesRouter = require('express').Router()
 const Attendance = require('../models/attendance')
+const User = require('../models/user')
 const { userExtractor, requireRole } = require('../utils/middleware')
 
 attendancesRouter.get('/me', userExtractor, async (request, response) => {

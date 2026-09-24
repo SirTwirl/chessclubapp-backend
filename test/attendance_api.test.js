@@ -110,6 +110,93 @@ describe('Attendance API', () => {
         .expect(403)
     })
   })
+  describe('POST /api/attendances/user/:userId', () => {
+    test('succeeds with status 201 when coach adds valid attendance', async () => {
+      const newAttendance = {
+        date: '2026-09-25',
+        status: 'present'
+      }
+
+      const response = await api
+        .post(`/api/attendances/user/${studentBeginner._id}`)
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(newAttendance)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+
+      assert.strictEqual(response.body.status, 'present')
+      assert.strictEqual(response.body.student.email, studentBeginner.email)
+
+      const attendancesAtEnd = await helper.attendancesInDb()
+      assert.strictEqual(attendancesAtEnd.length, 2)
+    })
+
+    test('fails with 403 Forbidden when student tries to create attendance', async () => {
+      const newAttendance = {
+        date: '2026-09-25',
+        status: 'present'
+      }
+
+      await api
+        .post(`/api/attendances/user/${studentBeginner._id}`)
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send(newAttendance)
+        .expect(403)
+    })
+
+    test('fails with 403 Forbidden when parent tries to create attendance', async () => {
+      const newAttendance = {
+        date: '2026-09-25',
+        status: 'present'
+      }
+
+      await api
+        .post(`/api/attendances/user/${studentBeginner._id}`)
+        .set('Authorization', `Bearer ${parentToken}`)
+        .send(newAttendance)
+        .expect(403)
+    })
+
+    test('fails with 400 Bad Request if status is invalid', async () => {
+      const newAttendance = {
+        date: '2026-09-25',
+        status: 'late'
+      }
+
+      await api
+        .post(`/api/attendances/user/${studentBeginner._id}`)
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(newAttendance)
+        .expect(400)
+    })
+
+    test('fails with 404 Not Found if student does not exist', async () => {
+      const nonExistentId = new mongoose.Types.ObjectId()
+      const newAttendance = {
+        date: '2026-09-25',
+        status: 'present'
+      }
+
+      await api
+        .post(`/api/attendances/user/${nonExistentId}`)
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(newAttendance)
+        .expect(404)
+    })
+
+    test('fails when adding duplicate attendance for same student and date', async () => {
+      const duplicateAttendance = {
+        date: '2026-09-20',
+        status: 'absent'
+      }
+
+      await api
+        .post(`/api/attendances/user/${studentBeginner._id}`)
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(duplicateAttendance)
+        .expect(400)
+    })
+  })
 
   after(async () => {
     await mongoose.connection.close()
