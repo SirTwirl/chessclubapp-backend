@@ -100,6 +100,31 @@ describe('GET /api/users', () => {
   })
 })
 
+describe('GET /api/users/me', () => {
+  test('returns profile of currently logged in user', async () => {
+    const student = (await User.find({ role: 'student' }))[0]
+    const studentToken = jwt.sign(
+      { email: student.email, id: student._id, role: student.role },
+      config.SECRET
+    )
+
+    const response = await api
+      .get('/api/users/me')
+      .set('Authorization', `Bearer ${studentToken}`)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    assert.strictEqual(response.body.email, student.email)
+    assert.strictEqual(response.body.role, 'student')
+  })
+
+  test('fails with 401 Unauthorized if token is missing', async () => {
+    await api
+      .get('/api/users/me')
+      .expect(401)
+  })
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
