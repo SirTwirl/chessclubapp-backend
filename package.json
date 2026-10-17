@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "cross-env NODE_ENV=test node --test --test-concurrency=1",
+    "lint": "eslint .",
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
@@ -28,6 +29,9 @@
     "mongoose": "^9.10.2"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
     "supertest": "^7.3.0"
   }
 }
