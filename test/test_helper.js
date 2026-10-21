@@ -1,5 +1,6 @@
 const User = require('../models/user')
 const Attendance = require('../models/attendance')
+const HomeworkAnswer = require('../models/homeworkAnswer')
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 
@@ -77,8 +78,14 @@ const attendancesInDb = async () => {
   return attendances.map(a => a.toJSON())
 }
 
+const answersInDb = async () => {
+  const answers = await HomeworkAnswer.find({})
+  return answers.map(a => a.toJSON())
+}
+
 module.exports = {
   initialUsers,
   usersInDb,
-  attendancesInDb
+  attendancesInDb,
+  answersInDb
 }
