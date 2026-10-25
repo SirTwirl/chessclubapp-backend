@@ -12,8 +12,8 @@ const Attendance = require('../models/attendance')
 const api = supertest(app)
 
 describe('Attendance API', () => {
-  let studentToken, otherStudentToken, parentToken, coachToken
-  let studentBeginner, studentIntermediate, parent, coach
+  let studentToken, otherStudentToken, parentToken, coachToken, adminToken
+  let studentBeginner, studentIntermediate, parent, coach, admin
 
   beforeEach(async () => {
     await User.deleteMany({})
@@ -25,6 +25,7 @@ describe('Attendance API', () => {
     studentIntermediate = await User.findOne({ email: 'studentintermediate@example.com' })
     parent = await User.findOne({ email: 'parent@example.com' })
     coach = await User.findOne({ email: 'coach@example.com' })
+    admin = await User.findOne({ email: 'admin@example.com' })
 
     studentToken = jwt.sign(
       { email: studentBeginner.email, id: studentBeginner._id, role: studentBeginner.role },
@@ -42,12 +43,225 @@ describe('Attendance API', () => {
       { email: coach.email, id: coach._id, role: coach.role },
       config.SECRET
     )
+    adminToken = jwt.sign(
+      { email: admin.email, id: admin._id, role: admin.role },
+      config.SECRET
+    )
 
     await new Attendance({
       student: studentBeginner._id,
       date: new Date('2026-09-20'),
       status: 'present'
     }).save()
+  })
+
+  describe('GET /api/attendances', () => {
+    test('returns attendance for the requested group and date to a coach', async () => {
+      const response = await api
+        .get('/api/attendances?group=beginner&date=2026-09-20')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+
+      assert.strictEqual(response.body.length, 1)
+      assert.strictEqual(response.body[0].status, 'present')
+      assert.strictEqual(response.body[0].student.email, studentBeginner.email)
+    })
+
+    test('allows an admin to read group attendance', async () => {
+      await api
+        .get('/api/attendances?group=beginner&date=2026-09-20')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200)
+    })
+
+    test('requires a valid token', async () => {
+      await api
+        .get('/api/attendances?group=beginner&date=2026-09-20')
+        .expect(401)
+
+      await api
+        .get('/api/attendances?group=beginner&date=2026-09-20')
+        .set('Authorization', 'Bearer invalid-token')
+        .expect(401)
+    })
+
+    test('rejects users without coach or admin role', async () => {
+      await api
+        .get('/api/attendances?group=beginner&date=2026-09-20')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .expect(403)
+
+      await api
+        .get('/api/attendances?group=beginner&date=2026-09-20')
+        .set('Authorization', `Bearer ${parentToken}`)
+        .expect(403)
+    })
+
+    test('validates group and date query parameters', async () => {
+      await api
+        .get('/api/attendances?group=beginner')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .expect(400)
+
+      await api
+        .get('/api/attendances?group=unknown&date=2026-09-20')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .expect(400)
+
+      await api
+        .get('/api/attendances?group=beginner&date=not-a-date')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .expect(400)
+
+      await api
+        .get('/api/attendances?group=beginner&date=2026-02-30')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .expect(400)
+    })
+  })
+
+  describe('POST /api/attendances', () => {
+    const attendanceDate = '2026-09-21'
+
+    test('saves attendance records for a group as a coach', async () => {
+      const response = await api
+        .post('/api/attendances')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send({
+          group: 'beginner',
+          date: attendanceDate,
+          records: [{ studentId: studentBeginner.id, isPresent: false }],
+        })
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+
+      assert.strictEqual(response.body.length, 1)
+      assert.strictEqual(response.body[0].status, 'absent')
+      assert.strictEqual(response.body[0].student.email, studentBeginner.email)
+
+      const attendancesAtEnd = await helper.attendancesInDb()
+      assert.strictEqual(attendancesAtEnd.length, 2)
+    })
+
+    test('allows an admin to save group attendance', async () => {
+      await api
+        .post('/api/attendances')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          group: 'beginner',
+          date: attendanceDate,
+          records: [{ studentId: studentBeginner.id, isPresent: true }],
+        })
+        .expect(201)
+    })
+
+    test('requires a valid token and coach or admin role', async () => {
+      const attendance = {
+        group: 'beginner',
+        date: attendanceDate,
+        records: [{ studentId: studentBeginner.id, isPresent: true }],
+      }
+
+      await api.post('/api/attendances').send(attendance).expect(401)
+      await api
+        .post('/api/attendances')
+        .set('Authorization', 'Bearer invalid-token')
+        .send(attendance)
+        .expect(401)
+      await api
+        .post('/api/attendances')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send(attendance)
+        .expect(403)
+      await api
+        .post('/api/attendances')
+        .set('Authorization', `Bearer ${parentToken}`)
+        .send(attendance)
+        .expect(403)
+    })
+
+    test('rejects invalid group, date, or records', async () => {
+      const validRecord = { studentId: studentBeginner.id, isPresent: true }
+      const request = (body) =>
+        api
+          .post('/api/attendances')
+          .set('Authorization', `Bearer ${coachToken}`)
+          .send(body)
+
+      await request({ group: 'unknown', date: attendanceDate, records: [validRecord] }).expect(400)
+      await request({ group: 'beginner', date: 'invalid', records: [validRecord] }).expect(400)
+      await request({ group: 'beginner', date: attendanceDate, records: [] }).expect(400)
+      await request({
+        group: 'beginner',
+        date: attendanceDate,
+        records: [{ studentId: studentBeginner.id, isPresent: 'yes' }],
+      }).expect(400)
+      await request({
+        group: 'beginner',
+        date: attendanceDate,
+        records: [{ studentId: 'invalid-id', isPresent: true }],
+      }).expect(400)
+    })
+
+    test('rejects students outside the selected group', async () => {
+      await api
+        .post('/api/attendances')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send({
+          group: 'beginner',
+          date: attendanceDate,
+          records: [{ studentId: studentIntermediate.id, isPresent: true }],
+        })
+        .expect(400)
+    })
+
+    test('requires attendance records for every student in the group', async () => {
+      await new User({
+        email: 'second-beginner@example.com',
+        passwordHash: studentBeginner.passwordHash,
+        role: 'student',
+        group: 'beginner',
+      }).save()
+
+      await api
+        .post('/api/attendances')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send({
+          group: 'beginner',
+          date: attendanceDate,
+          records: [{ studentId: studentBeginner.id, isPresent: true }],
+        })
+        .expect(400)
+    })
+
+    test('rejects duplicate students in one request and existing attendance', async () => {
+      const duplicateRecords = {
+        group: 'beginner',
+        date: attendanceDate,
+        records: [
+          { studentId: studentBeginner.id, isPresent: true },
+          { studentId: studentBeginner.id, isPresent: false },
+        ],
+      }
+
+      await api
+        .post('/api/attendances')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(duplicateRecords)
+        .expect(400)
+
+      const attendance = {
+        group: 'beginner',
+        date: '2026-09-20',
+        records: [{ studentId: studentBeginner.id, isPresent: false }],
+      }
+      await api
+        .post('/api/attendances')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(attendance)
+        .expect(409)
+    })
   })
 
   describe('GET /api/attendances/me', () => {
