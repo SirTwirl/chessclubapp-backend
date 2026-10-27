@@ -123,6 +123,28 @@ describe('GET /api/users/me', () => {
     assert.strictEqual(response.body.amountDue, student.amountDue)
   })
 
+  test('returns parent profile with child objects including amountDue', async () => {
+    const parent = await User.findOne({ role: 'parent' })
+    const parentToken = jwt.sign(
+      { email: parent.email, id: parent._id, role: parent.role },
+      config.SECRET
+    )
+    const authorization = ['Bearer', parentToken].join(' ')
+
+    const response = await api
+      .get('/api/users/me')
+      .set('Authorization', authorization)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    assert.strictEqual(response.body.role, 'parent')
+    assert.strictEqual(response.body.children.length, 1)
+    assert.strictEqual(response.body.children[0].id, '6ab41fe5025e875fb24854e6')
+    assert.strictEqual(response.body.children[0].name, 'Student')
+    assert.strictEqual(response.body.children[0].amountDue, 125.5)
+    assert.strictEqual(response.body.children[0].passwordHash, undefined)
+  })
+
   test('fails with 401 Unauthorized if token is missing', async () => {
     await api
       .get('/api/users/me')

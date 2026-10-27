@@ -9,6 +9,10 @@ usersRouter.get('/me', userExtractor, async (request, response) => {
     return response.status(401).json({ error: 'token missing or invalid' })
   }
 
+  if (user.role === 'parent') {
+    await user.populate('children', 'name surname group amountDue')
+  }
+
   response.json(user)
 })
 
