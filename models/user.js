@@ -36,6 +36,25 @@ const userSchema = new mongoose.Schema({
             message: 'Coaches and admins cannot be assigned to a group'
         }
     },
+    amountDue: {
+        type: Number,
+        min: 0,
+        required: function() {
+            return this.role === 'student'
+        },
+        default: function() {
+            return this.role === 'student' ? 0 : undefined
+        },
+        validate: {
+            validator: function(value) {
+                if (this.role !== 'student') {
+                    return value === undefined || value === null
+                }
+                return true
+            },
+            message: 'Only students can have an amount due'
+        }
+    },
     children: {
         type: [
             {

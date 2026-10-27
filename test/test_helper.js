@@ -34,7 +34,8 @@ const initialUsers = [
     age: 20,
     telephone: '1112223333',
     role: 'student',
-    group: 'beginner'
+    group: 'beginner',
+    amountDue: 125.5
   },
   {
     email: 'studentintermediate@example.com',
@@ -44,7 +45,8 @@ const initialUsers = [
     age: 20,
     telephone: '1112223333',
     role: 'student',
-    group: 'intermediate'
+    group: 'intermediate',
+    amountDue: 75
   },
   {
     email: 'studentadvanced@example.com',
@@ -54,7 +56,8 @@ const initialUsers = [
     age: 20,
     telephone: '1112223333',
     role: 'student',
-    group: 'advanced'
+    group: 'advanced',
+    amountDue: 0
   },
   {
     email: 'parent@example.com',

@@ -31,6 +31,9 @@ describe('GET /api/users', () => {
             .expect('Content-Type', /application\/json/)
         
         assert.strictEqual(response.body.length, initialUsers.length)
+        const student = response.body.find(user => user.email === 'studentbeginner@example.com')
+        assert.strictEqual(student.amountDue, 125.5)
+        assert.strictEqual(response.body.find(user => user.email === 'coach@example.com').amountDue, undefined)
     })
     test('returns users from beginner group', async () => {
         const response = await api
@@ -40,6 +43,7 @@ describe('GET /api/users', () => {
         .expect('Content-Type', /application\/json/)
         assert.strictEqual(response.body.length, 1)
         assert.strictEqual(response.body[0].email, 'studentbeginner@example.com')
+        assert.strictEqual(response.body[0].amountDue, 125.5)
     })
     test('returns users from intermediate group', async () => {
         const response = await api
@@ -116,6 +120,7 @@ describe('GET /api/users/me', () => {
 
     assert.strictEqual(response.body.email, student.email)
     assert.strictEqual(response.body.role, 'student')
+    assert.strictEqual(response.body.amountDue, student.amountDue)
   })
 
   test('fails with 401 Unauthorized if token is missing', async () => {
